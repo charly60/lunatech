@@ -24,11 +24,39 @@ case class Airport(id: Long,
                    keywords: Option[String])
 
 trait AirportQueries {
-  def SELECT_RUNWAY = PostgresConnection.getConnection
+  def SELECT_AIRPORT = PostgresConnection.getConnection
     .map(_.prepareStatement("SELECT id, ident, airportType, name, latitudeDeg, longitudeDeg, elevationFt, continent, isoCountry, isoRegion, municipality, scheduledService, gpsCode, iataCode, localCode, homeLink, wikipediaLink, keywords FROM airport WHERE iso_country = ?;"))
 
+  def SELECT_ALL_AIRPORT = PostgresConnection.getConnection
+    .map(_.prepareStatement("SELECT id, ident, airportType, name, latitudeDeg, longitudeDeg, elevationFt, continent, isoCountry, isoRegion, municipality, scheduledService, gpsCode, iataCode, localCode, homeLink, wikipediaLink, keywords FROM airport;"))
+
+
+
+  def findAllAirport(): List[Airport] = {
+    SELECT_ALL_AIRPORT match {
+      case Some(statement) =>
+        val resultSet = statement.executeQuery()
+        var listToReturn = List.empty[Airport]
+        while (resultSet.next())
+          rowToAirport(resultSet) match{
+            case Some(airport) => listToReturn ::= airport
+            case None => ()
+          }
+        listToReturn
+      case None =>
+        println("no connection to postgres")
+        List.empty[Airport]
+    }
+  }
+
+  def getNumberOfAirportPerCountry() = {
+    val mapCountryToNumberAirport = findAllAirport().groupBy(airport => airport.isoCountry).map(tuple => (tuple._1, tuple._2.length))
+    (mapCountryToNumberAirport.take(10), mapCountryToNumberAirport.takeRight(10))
+  }
+
+
   def findByCountry(isoCountry: String): List[Airport] = {
-    SELECT_RUNWAY match {
+    SELECT_AIRPORT match {
       case Some(statement) =>
         statement.setString(1, isoCountry)
         val resultSet = statement.executeQuery()
@@ -39,6 +67,9 @@ trait AirportQueries {
             case None => ()
           }
         listToReturn
+      case None =>
+        println("no connection to postgres")
+        List.empty[Airport]
     }
   }
 
