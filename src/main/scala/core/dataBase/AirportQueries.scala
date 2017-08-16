@@ -25,10 +25,10 @@ case class Airport(id: Long,
 
 trait AirportQueries {
   def SELECT_AIRPORT = PostgresConnection.getConnection
-    .map(_.prepareStatement("SELECT id, ident, airportType, name, latitudeDeg, longitudeDeg, elevationFt, continent, isoCountry, isoRegion, municipality, scheduledService, gpsCode, iataCode, localCode, homeLink, wikipediaLink, keywords FROM airport WHERE iso_country = ?;"))
+    .map(_.prepareStatement("SELECT id, ident, type, name, latitude_deg, longitude_deg, elevation_ft, continent, iso_country, iso_region, municipality, scheduled_service, gps_code, iata_code, local_code, home_link, wikipedia_link, keywords FROM airport WHERE iso_country = ?;"))
 
   def SELECT_ALL_AIRPORT = PostgresConnection.getConnection
-    .map(_.prepareStatement("SELECT id, ident, airportType, name, latitudeDeg, longitudeDeg, elevationFt, continent, isoCountry, isoRegion, municipality, scheduledService, gpsCode, iataCode, localCode, homeLink, wikipediaLink, keywords FROM airport;"))
+    .map(_.prepareStatement("SELECT id, ident, type, name, latitude_deg, longitude_deg, elevation_ft, continent, iso_country, iso_region, municipality, scheduled_service, gps_code, iata_code, local_code, home_link, wikipedia_link, keywords FROM airport;"))
 
 
 
@@ -50,10 +50,9 @@ trait AirportQueries {
   }
 
   def getNumberOfAirportPerCountry() = {
-    val mapCountryToNumberAirport = findAllAirport().groupBy(airport => airport.isoCountry).map(tuple => (tuple._1, tuple._2.length))
+    val mapCountryToNumberAirport = findAllAirport().groupBy(airport => airport.isoCountry).map(tuple => (tuple._1, tuple._2.length)).toList.sortWith( (tuple1, tuple2) => tuple1._2 < tuple2._2)
     (mapCountryToNumberAirport.take(10), mapCountryToNumberAirport.takeRight(10))
   }
-
 
   def findByCountry(isoCountry: String): List[Airport] = {
     SELECT_AIRPORT match {
@@ -78,14 +77,14 @@ trait AirportQueries {
     for {
       id <- Try(resultSet.getLong("id")).toOption
       ident <- Try(resultSet.getString("ident")).toOption
-      airportType <- Try(resultSet.getString("airport_type")).toOption
+      airportType <- Try(resultSet.getString("type")).toOption
       name <- Try(resultSet.getString("name")).toOption
       latitudeDeg <- Try(resultSet.getDouble("latitude_deg")).toOption
       longitudeDeg <- Try(resultSet.getDouble("longitude_deg")).toOption
       elevationFt = Try(resultSet.getInt("elevation_ft")).toOption
       continent <- Try(resultSet.getString("continent")).toOption
       isoCountry <- Try(resultSet.getString("iso_country")).toOption
-      isoRegion <- Try(resultSet.getString("isoRegion")).toOption
+      isoRegion <- Try(resultSet.getString("iso_region")).toOption
       municipality = Try(resultSet.getString("municipality")).toOption
       scheduledService <- Try(resultSet.getString("scheduled_service")).toOption
       gpsCode = Try(resultSet.getString("gps_code")).toOption
