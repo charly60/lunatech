@@ -1,12 +1,20 @@
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
-import akka.event.LoggingAdapter
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes.InternalServerError
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.Http
-import routes.RoutesHttp
+import akka.stream.ActorMaterializer
+import akka.util.Timeout
+import exoRoutes.RoutesHttp
+import scala.concurrent.duration._
 
-class ApplicationMain extends App {
+
+
+object ApplicationMain extends App {
   val routes = new RoutesHttp
+  implicit val system = ActorSystem("exoLunatech")
+  implicit val materializer = ActorMaterializer()
+
+
+  implicit val executionContext = system.dispatcher
+  implicit val timeout = Timeout(10 seconds)
+
   Http().bindAndHandle(routes.routes, "0.0.0.0", 8080)
 }
