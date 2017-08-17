@@ -26,9 +26,17 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
     } ~
       pathPrefix("report") {
         get {
-          complete {
-            ToResponseMarshallable("TODO repor")
+          pathPrefix("type_of_runway"){
+            complete {
+              ToResponseMarshallable(mapToJson(getTypeOfRunwayPerCountry()))
+            }
+          } ~
+          pathPrefix("number_of_airport"){
+            complete {
+              ToResponseMarshallable(tupleToJson(getNumberOfAirportPerCountry()))
+            }
           }
+
         }
       }
 
@@ -63,4 +71,24 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
       tupleElem :: acc
     }).toMap
   }
+
+
+  def mapToJson(map : Map[String, List[String]]) : String = {
+    map.foldLeft("{ ")((acc,mapElem) => {
+      acc + s""""${mapElem._1.toString}" : ${mapElem._2.toString()},"""
+    }).dropRight(1)+" }"
+  }
+
+  def tupleToJson(tuple : (List[(String, Int)], List[(String, Int)])) : String ={
+    def listOfKeyValueToJson(list : List[(String, Int)]) = {
+      list.foldLeft("{ ")((acc,keyValue) => {
+        acc + s""" "${keyValue._1}" : "${keyValue._2},"""
+      }).dropRight(1) + " }"
+    }
+    val lowNumberOfAirportCountries = listOfKeyValueToJson(tuple._1)
+    val hightNumberOfAirportCountries = listOfKeyValueToJson(tuple._2)
+
+    s"""{ "lowNumberOfAirportCountries" : $lowNumberOfAirportCountries , "hightNumberOfAirportCountries" : $hightNumberOfAirportCountries }"""
+  }
+
 }
