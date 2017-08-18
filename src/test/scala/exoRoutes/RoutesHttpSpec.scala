@@ -96,4 +96,13 @@ class RoutesHttpSpec extends RoutesHttp with WordSpecLike with Matchers with Sca
     Await.result(responseEntity.dataBytes.map(_.decodeString("UTF8")).toMat(Sink.fold("")((acc, elem) => acc + elem))(Keep.right).run, 2 seconds).length should be > 3
   }
 
+
+  val badPostRequest = HttpRequest(
+    HttpMethods.POST,
+    uri = "/find",
+    entity = HttpEntity(MediaTypes.`application/json`, s"""{ "anyJsonKey" : "anyValue" }"""))
+
+  badPostRequest ~> routes ~> check {
+    status.isSuccess() shouldEqual false
+  }
 }

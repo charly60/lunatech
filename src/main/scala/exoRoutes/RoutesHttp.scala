@@ -1,6 +1,7 @@
 package exoRoutes
 
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import akka.http.scaladsl.model.StatusCodes.BadRequest
 import akka.http.scaladsl.server.Directives.{complete, pathPrefix, post, _}
 import akka.http.scaladsl.server.Route
 import core.dataBase._
@@ -15,15 +16,20 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
     pathPrefix("find") {
       post {
         entity(as[Json]) { nameOrCodeJson =>
-          val nameOrCode = nameOrCodeJson.findAllByKey("pays").head.asString.get
-          val response = findByNameOrCode(nameOrCode) match {
-            case Some(country) =>
-              s"""{"country" : "${country.name}", "airports" : ${airportsJsonify(findByCountry(country.code))} }"""
-            case None => "{}"
-          }
+          val nameOrCode = nameOrCodeJson.findAllByKey("pays").headOption.flatMap(_.asString)
+          nameOrCode match {
+            case Some(nameOrCode) =>
+              val response = findByNameOrCode(nameOrCode) match {
+                case Some(country) =>
+                  s"""{"country" : "${country.name}", "airports" : ${airportsJsonify(findByCountry(country.code))} }"""
+                case None => "{}"
+              }
 
-          complete {
-            ToResponseMarshallable(response)
+              complete {
+                ToResponseMarshallable(response)
+              }
+            case None =>
+              complete(BadRequest)
           }
         }
       }
