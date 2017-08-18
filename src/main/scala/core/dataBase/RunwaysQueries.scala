@@ -39,8 +39,8 @@ trait RunwaysQueries {
         val resultSet = statement.executeQuery()
         var listToReturn = List.empty[Runway]
         while (resultSet.next())
-          rowToRunway(resultSet) match{
-            case Some(runway)=> listToReturn ::= runway
+          rowToRunway(resultSet) match {
+            case Some(runway) => listToReturn ::= runway
             case None => ()
           }
         listToReturn
@@ -51,9 +51,6 @@ trait RunwaysQueries {
   }
 
 
-
-
-
   def findByAirportRef(airportRef: Long): List[Runway] = {
     SELECT_RUNWAY match {
       case Some(statement) =>
@@ -61,8 +58,8 @@ trait RunwaysQueries {
         val resultSet = statement.executeQuery()
         var listToReturn = List.empty[Runway]
         while (resultSet.next())
-          rowToRunway(resultSet) match{
-            case Some(runway)=> listToReturn ::= runway
+          rowToRunway(resultSet) match {
+            case Some(runway) => listToReturn ::= runway
             case None => ()
           }
         listToReturn
@@ -76,7 +73,7 @@ trait RunwaysQueries {
   def rowToRunway(resultSet: ResultSet): Option[Runway] = {
     for {
       id <- Try(resultSet.getLong("id")).toOption
-      airportRef <-  Try(resultSet.getLong("airport_ref")).toOption
+      airportRef <- Try(resultSet.getLong("airport_ref")).toOption
       airportIdent <- Try(resultSet.getString("airport_ident")).toOption
       lengthFt = Try(resultSet.getInt("length_ft")).toOption
       widthFt = Try(resultSet.getInt("width_ft")).toOption
@@ -98,7 +95,7 @@ trait RunwaysQueries {
     } yield {
       Runway(id, airportRef, airportIdent, lengthFt, widthFt, surface, lighted, closed,
         leIdent, leLatitudeDeg, leLongitudeDeg, leElevationFt, leHeadingDegT, leDisplacedThresholdFt,
-      heIdent, heLatitudeDeg, heLongitudeDeg, heElevationFt, heHeadingDegT, heDisplacedThresholdFt)
+        heIdent, heLatitudeDeg, heLongitudeDeg, heElevationFt, heHeadingDegT, heDisplacedThresholdFt)
     }
   }
 

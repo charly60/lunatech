@@ -31,14 +31,13 @@ trait AirportQueries {
     .map(_.prepareStatement("SELECT id, ident, type, name, latitude_deg, longitude_deg, elevation_ft, continent, iso_country, iso_region, municipality, scheduled_service, gps_code, iata_code, local_code, home_link, wikipedia_link, keywords FROM airport;"))
 
 
-
   def findAllAirport(): List[Airport] = {
     SELECT_ALL_AIRPORT match {
       case Some(statement) =>
         val resultSet = statement.executeQuery()
         var listToReturn = List.empty[Airport]
         while (resultSet.next())
-          rowToAirport(resultSet) match{
+          rowToAirport(resultSet) match {
             case Some(airport) => listToReturn ::= airport
             case None => ()
           }
@@ -49,14 +48,14 @@ trait AirportQueries {
     }
   }
 
-    def findByCountry(isoCountry: String): List[Airport] = {
+  def findByCountry(isoCountry: String): List[Airport] = {
     SELECT_AIRPORT match {
       case Some(statement) =>
         statement.setString(1, isoCountry)
         val resultSet = statement.executeQuery()
         var listToReturn = List.empty[Airport]
         while (resultSet.next())
-          rowToAirport(resultSet) match{
+          rowToAirport(resultSet) match {
             case Some(airport) => listToReturn ::= airport
             case None => ()
           }
@@ -87,7 +86,7 @@ trait AirportQueries {
       localCode = Try(resultSet.getString("local_code")).toOption
       homeLink = Try(resultSet.getString("home_link")).toOption
       wikipediaLink = Try(resultSet.getString("wikipedia_link")).toOption
-      keywords  = Try(resultSet.getString("keywords")).toOption
+      keywords = Try(resultSet.getString("keywords")).toOption
     } yield {
       Airport(id,
         ident,

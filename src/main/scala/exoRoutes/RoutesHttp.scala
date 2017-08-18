@@ -30,16 +30,16 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
     } ~
       pathPrefix("report") {
         get {
-          pathPrefix("type_of_runway"){
+          pathPrefix("type_of_runway") {
             complete {
               ToResponseMarshallable(mapToJson(getTypeOfRunwayPerCountry()))
             }
           } ~
-          pathPrefix("number_of_airport"){
-            complete {
-              ToResponseMarshallable(tupleToJson(getNumberOfAirportPerCountry()))
+            pathPrefix("number_of_airport") {
+              complete {
+                ToResponseMarshallable(tupleToJson(getNumberOfAirportPerCountry()))
+              }
             }
-          }
 
         }
       }
@@ -67,8 +67,8 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
     val countryToAirportsList = findAllAirport().groupBy(_.isoCountry)
     countryToAirportsList.foldLeft(List.empty[(String, List[String])])((acc, keyValue) => {
       val listOfTypes = keyValue._2.foldLeft(List.empty[String])((acc2, airport) => {
-        Try(refToRunwaysList(airport.id)).toOption match{
-          case Some(listOption) =>  (acc2 ++ listOption.map(_.surface).filter(_.isDefined).flatten).distinct
+        Try(refToRunwaysList(airport.id)).toOption match {
+          case Some(listOption) => (acc2 ++ listOption.map(_.surface).filter(_.isDefined).flatten).distinct
           case None => acc2
         }
       })
@@ -80,24 +80,25 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
 
   def getNumberOfAirportPerCountry() = {
     val mapCountryToAirports = findAllAirport().groupBy(airport => airport.isoCountry)
-    val otherCountries = findAllCountry().map( country => country.code -> List.empty[Airport]).filter(mapElem => !mapCountryToAirports.contains(mapElem._1) )
+    val otherCountries = findAllCountry().map(country => country.code -> List.empty[Airport]).filter(mapElem => !mapCountryToAirports.contains(mapElem._1))
 
-    val mapCountryToNumberAirport = (mapCountryToAirports ++ otherCountries ).map(tuple => (tuple._1, tuple._2.length)).toList.sortWith( (tuple1, tuple2) => tuple1._2 < tuple2._2)
+    val mapCountryToNumberAirport = (mapCountryToAirports ++ otherCountries).map(tuple => (tuple._1, tuple._2.length)).toList.sortWith((tuple1, tuple2) => tuple1._2 < tuple2._2)
     (mapCountryToNumberAirport.take(10), mapCountryToNumberAirport.takeRight(10))
   }
 
-  def mapToJson(map : Map[String, List[String]]) : String = {
-    map.foldLeft("{ ")((acc,mapElem) => {
+  def mapToJson(map: Map[String, List[String]]): String = {
+    map.foldLeft("{ ")((acc, mapElem) => {
       acc + s""""${mapElem._1.toString}" : ${mapElem._2.toString()},"""
-    }).dropRight(1)+" }"
+    }).dropRight(1) + " }"
   }
 
-  def tupleToJson(tuple : (List[(String, Int)], List[(String, Int)])) : String ={
-    def listOfKeyValueToJson(list : List[(String, Int)]) = {
-      list.foldLeft("{ ")((acc,keyValue) => {
+  def tupleToJson(tuple: (List[(String, Int)], List[(String, Int)])): String = {
+    def listOfKeyValueToJson(list: List[(String, Int)]) = {
+      list.foldLeft("{ ")((acc, keyValue) => {
         acc + s""" "${keyValue._1}" : "${keyValue._2},"""
       }).dropRight(1) + " }"
     }
+
     val lowNumberOfAirportCountries = listOfKeyValueToJson(tuple._1)
     val hightNumberOfAirportCountries = listOfKeyValueToJson(tuple._2)
 

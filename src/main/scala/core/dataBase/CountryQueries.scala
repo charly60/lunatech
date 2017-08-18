@@ -28,7 +28,7 @@ trait CountryQueries {
         val resultSet = statement.executeQuery()
         var listToReturn = List.empty[Country]
         while (resultSet.next())
-          rowToCountry(resultSet) match{
+          rowToCountry(resultSet) match {
             case Some(airport) => listToReturn ::= airport
             case None => ()
           }
@@ -38,6 +38,7 @@ trait CountryQueries {
         List.empty[Country]
     }
   }
+
   def findByNameOrCode(nameOrCode: String): Option[Country] = {
     SELECT_COUNTRY match {
       case Some(statement) =>
@@ -63,7 +64,7 @@ trait CountryQueries {
       wikipediaLink <- Try(resultSet.getString("wikipedia_link")).toOption
       keywords = Try(resultSet.getString("keywords")).toOption
     } yield {
-        Country(id, code, name, continent, wikipediaLink, keywords)
-      }
+      Country(id, code, name, continent, wikipediaLink, keywords)
+    }
   }
 }
