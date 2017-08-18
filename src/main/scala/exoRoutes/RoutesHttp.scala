@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.Directives.{complete, pathPrefix, post, _}
 import akka.http.scaladsl.server.Route
 import core.dataBase._
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
+import io.circe.Json
 
 import scala.util.Try
 
@@ -13,8 +14,8 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
   val routes: Route =
     pathPrefix("find") {
       post {
-        entity(as[String]) { nameOrCode =>
-          println(nameOrCode)
+        entity(as[Json]) { nameOrCodeJson =>
+          val nameOrCode = nameOrCodeJson.findAllByKey("pays").head.asString.get
           val response = findByNameOrCode(nameOrCode) match {
             case Some(country) =>
               s"""{"country" : "${country.name}", "airports" : ${airportsJsonify(findByCountry(country.code))} }"""
@@ -45,11 +46,12 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
 
 
   def airportsJsonify(airports: List[Airport]): String = {
+    val runways = findAllRunways()
     airports.foldLeft("[ ")(
       (json, airport) => {
         json +
           s"""{ "airportType" : "${airport.airportType}", "name" : "${airport.name}", "runways" : ${
-            runwaysJsonify(findByAirportRef(airport.id))
+            runwaysJsonify(runways.filter(runway => runway.airportRef == airport.id))
           } },"""
       }).dropRight(1) + " ]"
   }
