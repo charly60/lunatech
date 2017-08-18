@@ -1,18 +1,12 @@
 package exoRoutes
 
-import java.net.URLEncoder
-
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Keep, Sink}
 import core.dataBase.{Airport, Runway}
 import org.scalatest.{Matchers, WordSpecLike}
 
 import scala.concurrent.Await
-import scala.util.Properties
 
 
 class RoutesHttpSpec extends RoutesHttp with WordSpecLike with Matchers with ScalatestRouteTest {

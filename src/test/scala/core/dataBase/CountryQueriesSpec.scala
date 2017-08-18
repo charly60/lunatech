@@ -1,6 +1,6 @@
 package core.dataBase
 
-import org.scalatest.{Matchers, OptionValues, WordSpecLike}
+import org.scalatest.{Matchers, WordSpecLike}
 
 
 class CountryQueriesSpec extends CountryQueries with WordSpecLike with Matchers {
