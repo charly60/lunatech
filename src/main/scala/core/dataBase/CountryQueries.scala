@@ -22,7 +22,7 @@ trait CountryQueries {
     .map(_.prepareStatement("SELECT id, code, name, continent, wikipedia_link, keywords FROM country;"))
 
 
-  def findAllCountry: List[Country] = {
+  def findAllCountry(): List[Country] = {
     SELECT_ALL_COUNTRY match {
       case Some(statement) =>
         val resultSet = statement.executeQuery()

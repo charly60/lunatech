@@ -12,15 +12,18 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
 
   val routes: Route =
     pathPrefix("find") {
-      (post & formField("message")) { nameOrCode =>
-        val response = findByNameOrCode(nameOrCode) match {
-          case Some(country) =>
-            s"""{"country" : "${country.name}", "airports" : ${airportsJsonify(findByCountry(country.code))} }"""
-          case None => "{}"
-        }
+      post {
+        entity(as[String]) { nameOrCode =>
+          println(nameOrCode)
+          val response = findByNameOrCode(nameOrCode) match {
+            case Some(country) =>
+              s"""{"country" : "${country.name}", "airports" : ${airportsJsonify(findByCountry(country.code))} }"""
+            case None => "{}"
+          }
 
-        complete {
-          ToResponseMarshallable(response)
+          complete {
+            ToResponseMarshallable(response)
+          }
         }
       }
     } ~
@@ -72,6 +75,14 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
     }).toMap
   }
 
+
+  def getNumberOfAirportPerCountry() = {
+    val mapCountryToAirports = findAllAirport().groupBy(airport => airport.isoCountry)
+    val otherCountries = findAllCountry().map( country => country.code -> List.empty[Airport]).filter(mapElem => !mapCountryToAirports.contains(mapElem._1) )
+
+    val mapCountryToNumberAirport = (mapCountryToAirports ++ otherCountries ).map(tuple => (tuple._1, tuple._2.length)).toList.sortWith( (tuple1, tuple2) => tuple1._2 < tuple2._2)
+    (mapCountryToNumberAirport.take(10), mapCountryToNumberAirport.takeRight(10))
+  }
 
   def mapToJson(map : Map[String, List[String]]) : String = {
     map.foldLeft("{ ")((acc,mapElem) => {

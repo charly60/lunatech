@@ -49,12 +49,7 @@ trait AirportQueries {
     }
   }
 
-  def getNumberOfAirportPerCountry() = {
-    val mapCountryToNumberAirport = findAllAirport().groupBy(airport => airport.isoCountry).map(tuple => (tuple._1, tuple._2.length)).toList.sortWith( (tuple1, tuple2) => tuple1._2 < tuple2._2)
-    (mapCountryToNumberAirport.take(10), mapCountryToNumberAirport.takeRight(10))
-  }
-
-  def findByCountry(isoCountry: String): List[Airport] = {
+    def findByCountry(isoCountry: String): List[Airport] = {
     SELECT_AIRPORT match {
       case Some(statement) =>
         statement.setString(1, isoCountry)
