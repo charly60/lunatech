@@ -68,6 +68,11 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
     }).dropRight(1) + " ]"
   }
 
+  def listToJson(list : List[String]) : String = {
+    list.foldLeft("[ ")((acc,str) => acc + str + "," ).dropRight(1) + " ]"
+  }
+
+
   def getTypeOfRunwayPerCountry(): Map[String, List[String]] = {
     val refToRunwaysList = findAllRunways().groupBy(_.airportRef)
     val countryToAirportsList = findAllAirport().groupBy(_.isoCountry)
@@ -78,7 +83,7 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
           case None => acc2
         }
       })
-      val tupleElem = keyValue._1 -> listOfTypes
+      val tupleElem = keyValue._1 -> listOfTypes   // TODO override le toString de List pour faire un vrai Json
       tupleElem :: acc
     }).toMap
   }
