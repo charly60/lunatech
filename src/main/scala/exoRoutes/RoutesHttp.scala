@@ -69,7 +69,7 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
   }
 
   def listToJson(list : List[String]) : String = {
-    list.foldLeft("[ ")((acc,str) => acc + str + "," ).dropRight(1) + " ]"
+    list.foldLeft("[ ")((acc,str) => s"""$acc "$str" ,""" ).dropRight(1) + " ]"
   }
 
 
@@ -99,14 +99,14 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
 
   def mapToJson(map: Map[String, List[String]]): String = {
     map.foldLeft("{ ")((acc, mapElem) => {
-      acc + s""""${mapElem._1.toString}" : ${mapElem._2.toString()},"""
+      acc + s""""${mapElem._1.toString}" : ${listToJson(mapElem._2)},"""
     }).dropRight(1) + " }"
   }
 
   def tupleToJson(tuple: (List[(String, Int)], List[(String, Int)])): String = {
     def listOfKeyValueToJson(list: List[(String, Int)]) = {
       list.foldLeft("{ ")((acc, keyValue) => {
-        acc + s""" "${keyValue._1}" : "${keyValue._2},"""
+        acc + s""" "${keyValue._1}" : "${keyValue._2}","""
       }).dropRight(1) + " }"
     }
 

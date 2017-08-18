@@ -9,7 +9,6 @@ object PostgresConnection {
 
   var postgresConnection: Option[Connection] = None
 
-
   def getConnection: Option[Connection] = {
     postgresConnection match {
       case None =>
@@ -23,7 +22,7 @@ object PostgresConnection {
         postgresConnection = Try(DriverManager.getConnection(url, username, password)).toOption
         postgresConnection
 
-      case Some(Connection) =>
+      case Some(connection) =>
         postgresConnection
     }
 
