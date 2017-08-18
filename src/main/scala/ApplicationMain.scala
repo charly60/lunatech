@@ -18,5 +18,5 @@ object ApplicationMain extends App {
   implicit val executionContext = system.dispatcher
   implicit val timeout = Timeout(10 seconds)
 
-  Http().bindAndHandle(routes.routes, Properties.envOrElse("API_HOST", "0.0.0.0"), Properties.envOrElse("API_PORT", "8080").toInt)
+  Http().bindAndHandle(routes.routes, Properties.envOrElse("API_BIND", "0.0.0.0"), Properties.envOrElse("API_PORT", "8080").toInt)
 }
