@@ -4,7 +4,8 @@ import java.net.URLEncoder
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, Uri}
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Keep, Sink}
 import core.dataBase.{Airport, Runway}
@@ -14,11 +15,7 @@ import scala.concurrent.Await
 import scala.util.Properties
 
 
-class RoutesHttpSpec extends RoutesHttp with WordSpecLike with Matchers{
-
-  implicit val system = ActorSystem("systemForTests")
-  implicit val materializer = ActorMaterializer()
-
+class RoutesHttpSpec extends RoutesHttp with WordSpecLike with Matchers with ScalatestRouteTest {
 
   val airport1 = Airport(id= 1,
     ident= "1",
@@ -94,15 +91,15 @@ class RoutesHttpSpec extends RoutesHttp with WordSpecLike with Matchers{
   highAirportNumberCountry.toString should be ("List((VE,592), (CO,700), (DE,703), (AR,713), (FR,789), (RU,920), (AU,1908), (CA,2454), (BR,3839), (US,21501))")
 
 
-  val futureResp = Http(system).singleRequest(HttpRequest(method = HttpMethods.POST,
-    uri = Uri.from(host = Properties.envOrElse("API_HOST", "127.0.0.1"), port = Properties.envOrElse("API_PORT", "8080").toInt, path = "/find").toString().drop(2),
-    entity ="France"))
-
   import scala.concurrent.duration._
+  val postRequest = HttpRequest(
+    HttpMethods.POST,
+    uri = "/find",
+    entity = HttpEntity(MediaTypes.`application/json`, s"""{ "pays" : "France" }"""))
 
-  val resp = Await.result(futureResp, 5 seconds)
+  postRequest ~> routes ~> check {
+    status.isSuccess() shouldEqual true
+    Await.result(responseEntity.dataBytes.map(_.decodeString("UTF8")).toMat(Sink.fold("")((acc, elem) => acc + elem))(Keep.right).run, 2 seconds).length should be > 3
+  }
 
-  val futureRespEntityContent = resp.entity.dataBytes.map(_.decodeString("UTF8")).toMat(Sink.fold("")((acc, elem) => acc + elem))(Keep.right).run()
-
-  Await.result(futureRespEntityContent, 2 seconds) should be ("")
 }
