@@ -1,12 +1,11 @@
 package exoRoutes
 
+import java.sql.ResultSet
+
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
-import akka.http.scaladsl.model.StatusCodes.BadRequest
-import akka.http.scaladsl.server.Directives.{complete, pathPrefix, post, _}
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import core.dataBase._
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
-import io.circe.Json
 
 import scala.util.Try
 
@@ -14,22 +13,16 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
 
   val routes: Route =
     pathPrefix("find") {
-      post {
-        entity(as[Json]) { nameOrCodeJson =>
-          val nameOrCode = nameOrCodeJson.findAllByKey("pays").headOption.flatMap(_.asString)
-          nameOrCode match {
-            case Some(nameOrCode) =>
-              val response = findByNameOrCode(nameOrCode) match {
-                case Some(country) =>
-                  s"""{"country" : "${country.name}", "airports" : ${airportsJsonify(findByCountry(country.code))} }"""
-                case None => "{}"
-              }
-
-              complete {
-                ToResponseMarshallable(response)
-              }
-            case None =>
-              complete(BadRequest)
+      get {
+        parameter('nameOrCode) { nameOrCode: String =>
+          val response = findByNameOrCode(nameOrCode) match {
+            case Some(country) =>
+              //TODO utiliser la jointure, plus efficace
+              s"""{"country" : "${country.name}", "airports" : ${airportsJsonify(findAirportsByCountry(country.code))} }"""
+            case None => "{}"
+          }
+          complete {
+            ToResponseMarshallable(response)
           }
         }
       }
@@ -70,6 +63,58 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
 
   def listToJson(list : List[String]) : String = {
     list.foldLeft("[ ")((acc,str) => s"""$acc "$str" ,""" ).dropRight(1) + " ]"
+  }
+
+  def findAirportsAndRunwaysByCountry(countryCode: String) : String = {
+    val qqch = selectRunwaysAndAirport(countryCode).groupBy( runwayAndAirport => (runwayAndAirport.airportName, runwayAndAirport.airportType))
+    qqch.toList.foldLeft("[ ")( (acc, mapElem) => {
+      acc + s"""{ "airportName" : "${mapElem._1._1}", "airportType" : "${mapElem._1._2}" ,"runways" : ${
+        listToJson(mapElem._2.map(runwayAndAiport => s"""{ "lighted" : ${runwayAndAiport.lighted}, "closed" : ${runwayAndAiport.closed} }"""))
+      } },"""
+    } ).dropRight(1)+" ]"
+  }
+
+  def SELECT_RUNWAYS_AND_AIRPORTS = PostgresConnection.getConnection
+    .map(_.prepareStatement(s"""select type, name, lighted, closed from airport inner join runway on runway.airport_ref = airport.id where airport.iso_country = ?;"""))
+
+
+  def selectRunwaysAndAirport(countryCode :String) : List[RunwayAndAirport]= {
+    SELECT_ALL_RUNWAY match {
+      case Some(statement) =>
+        val resultSet = statement.executeQuery()
+        var listToReturn = List.empty[RunwayAndAirport]
+        while (resultSet.next())
+          rowToRunwayAndAirport(resultSet) match {
+            case Some(runwayAndAirport) => listToReturn ::= runwayAndAirport
+            case None => ()
+          }
+        listToReturn
+      case None =>
+        println("no connection to postgres")
+        List.empty[RunwayAndAirport]
+    }
+  }
+
+  def rowToRunwayAndAirport(resultSet: ResultSet): Option[RunwayAndAirport] = {
+    // Ne fonctionne pas pour une raison inconnue...
+    for {
+      airportType <- Try(resultSet.getString("type")).toOption
+      _ <- Some(println("1: " +airportType))
+      name <- Try(resultSet.getString("name")).toOption
+      _ <- Some(println("2 : " +name))
+      lighted <- Try(resultSet.getInt("lighted")).toOption
+      _ <- Some(println("4 :"+lighted))
+      closed <- Try(resultSet.getInt("closed")).toOption
+      _ <- Some(println("5: " +closed))
+
+    } yield {
+      println("OK")
+      RunwayAndAirport(
+        airportType,
+        name,
+        lighted,
+        closed)
+    }
   }
 
 
@@ -117,3 +162,4 @@ class RoutesHttp extends AirportQueries with CountryQueries with RunwaysQueries 
   }
 
 }
+case class RunwayAndAirport(airportType : String, airportName : String, lighted : Int, closed: Int)

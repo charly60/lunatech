@@ -48,7 +48,7 @@ trait AirportQueries {
     }
   }
 
-  def findByCountry(isoCountry: String): List[Airport] = {
+  def findAirportsByCountry(isoCountry: String): List[Airport] = {
     SELECT_AIRPORT match {
       case Some(statement) =>
         statement.setString(1, isoCountry)
